@@ -1,185 +1,204 @@
-﻿# html-brief
+<p align="center">
+  <img src="docs/assets/logo.svg" alt="html-brief" width="120" />
+</p>
 
-AI output you can read, decide on, and send back.
+<h1 align="center">html-brief</h1>
 
-**html-brief** is an AI-human communication skill for turning long AI output into self-contained HTML briefs: plans, comparisons, reviews, reports, and small purpose-built editors with round-trip export.
+<p align="center">
+  <strong>AI output you can actually read, decide on, and send back.</strong>
+</p>
 
-## What this is NOT
+<p align="center">
+  <a href="#install"><img src="https://img.shields.io/badge/install-30s-blue" alt="Install in 30s" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License" /></a>
+  <a href="#works-with"><img src="https://img.shields.io/badge/agents-Claude_Code_%7C_Codex_%7C_Cursor_%7C_Gemini-8A2BE2" alt="Multi-agent" /></a>
+</p>
 
-This is not a frontend tool.
+<p align="center">
+  <a href="#install">Install</a> · <a href="#quickstart">Quickstart</a> · <a href="#archetypes">Archetypes</a> · <a href="#examples">Examples</a> · <a href="#round-trip">Round-trip</a> · <a href="CONTRIBUTING.md">Contribute</a>
+</p>
 
-This is not a website generator.
+---
 
-This is not an app builder.
+AI agents write 400-line plans nobody reads.
 
-This is not a landing-page maker.
+**html-brief** turns that into a single HTML file you open in a browser — with a summary you scan in 5 seconds, diagrams you understand at a glance, and a "Copy as Prompt" button that sends your decisions back to the agent.
 
-This is not a component library.
+## What This Is Not
 
-This is not a visual polish plugin.
+This is not a frontend framework, a website generator, or a design polish plugin. It does not replace Markdown for short answers. It is for the moment when AI output becomes too complex to read, compare, or act on as plain text.
 
-This is not a dashboard template pack.
-
-This is not a replacement for Markdown everywhere.
-
-This is not a design system.
-
-This is not a way to make every answer prettier.
-
-This is not for production UI components.
-
-This is not for short answers.
-
-This is not for code-only output.
-
-This is not for terminal logs.
-
-This is not for marketing pages.
-
-This is not for decorative HTML.
-
-This is not an "AI output generator."
-
-html-brief is for moments when Markdown becomes too flat: the user needs to understand structure, compare options, inspect a review, read a report, edit structured data, and then send the result back to an AI.
-
-## Concept
-
-A brief is a structured document designed for comprehension and decision-making. It does not have to be short. A 30-page migration plan can be a brief if the reader can understand the recommendation, inspect the risks, and act on it quickly.
-
-html-brief uses HTML because HTML can combine text, hierarchy, tables, diagrams, forms, progressive disclosure, and copy/export actions in one browser-openable file. The goal is not to make AI output look like a website. The goal is to make AI output usable as an interface between human judgment and the next AI step.
-
-## The three-stage Before / After
-
-### 1. Before: long Markdown
-
-A normal AI answer for a serious implementation plan often becomes a long Markdown file. It may be technically correct, but the reader must scroll, remember dependencies, compare tradeoffs mentally, and copy pieces by hand.
-
-### 2. After: an HTML brief
-
-The same plan becomes a single HTML file with a hero summary, semantic sections, an architecture diagram, a phased timeline, visible risks, validation gates, and progressive disclosure. The reader can scan the first screen, choose what to inspect, and understand what action is expected.
-
-### 3. Round-trip: back to AI
-
-The HTML brief is not the end. Copy as Prompt, Copy as JSON, Copy as Markdown, and Review-specific comment export turn the human's decisions or edits into structured input for the next AI session.
-
-## Archetypes
-
-| Archetype | Use it for | Output |
-|---|---|---|
-| Plan | RFCs, implementation plans, migrations, rollouts | Hero, architecture, phases, risks, validation |
-| Compare | Options, tradeoffs, decisions | Recommendation, option cards, matrix, selected decision |
-| Review | PRs, diffs, generated code, system changes | Change map, annotated findings, review comments |
-| Report | Research, incidents, status, explainers | Executive summary, findings, evidence, actions |
-| Editor | Feature flags, prompts, tickets, settings | Controls, validation, live preview, export/reset |
+<!-- 📸 REPLACE THIS with a real Before/After GIF or screenshot
+     See docs/SCREENSHOT-GUIDE.md for how to capture it.
+-->
+<p align="center">
+  <img src="docs/assets/before-after.gif" alt="Before: 400-line Markdown → After: scannable HTML brief" width="720" />
+</p>
 
 ## Install
 
-Clone the repository:
-
 ```bash
-git clone https://github.com/<your-org>/html-brief.git
+git clone https://github.com/YOUR_USERNAME/html-brief.git
 cd html-brief
 ```
 
-Install for Claude Code:
+Pick your agent:
 
 ```bash
-mkdir -p ~/.claude/skills
-ln -sf "$(pwd)/skills/html-brief" ~/.claude/skills/html-brief
+# Claude Code
+mkdir -p ~/.claude/skills && ln -sf "$(pwd)/skills/html-brief" ~/.claude/skills/html-brief
+
+# Codex CLI
+mkdir -p ~/.codex/skills && ln -sf "$(pwd)/skills/html-brief" ~/.codex/skills/html-brief
+
+# Gemini CLI
+mkdir -p ~/.gemini/skills && ln -sf "$(pwd)/skills/html-brief" ~/.gemini/skills/html-brief
+
+# Cursor (current project)
+mkdir -p .cursor/skills && ln -sf "$(pwd)/skills/html-brief" .cursor/skills/html-brief
 ```
 
-Install for Codex CLI:
-
-```bash
-mkdir -p ~/.codex/skills
-ln -sf "$(pwd)/skills/html-brief" ~/.codex/skills/html-brief
-```
-
-Install for Gemini CLI:
-
-```bash
-mkdir -p ~/.gemini/skills
-ln -sf "$(pwd)/skills/html-brief" ~/.gemini/skills/html-brief
-```
-
-Install for Cursor in the current project:
-
-```bash
-mkdir -p .cursor/skills
-ln -sf "$(pwd)/skills/html-brief" .cursor/skills/html-brief
-```
+Done. No dependencies. No build step. No config.
 
 ## Quickstart
 
-Single command to create the first output after installing for Claude Code:
-
 ```bash
-claude "/html-brief Create an HTML implementation plan for a zero-downtime Postgres migration. Include architecture, phases, risks, validation gates, and Export Bridge."
+/html-brief Create an implementation plan for a zero-downtime Postgres migration.
 ```
 
-For other agents, use the same natural-language instruction after installing the skill:
+The skill picks the right archetype, generates a self-contained `.html` file, and you open it in any browser.
 
-```text
-/html-brief Create an HTML implementation plan for a zero-downtime Postgres migration. Include architecture, phases, risks, validation gates, and Export Bridge.
+Other things you can say:
+
+```
+"Compare JWT vs session cookies vs OAuth proxy — make it an html-brief."
+"Review this PR as an html-brief. Focus on the streaming logic."
+"Create a feature-flag editor I can tune and copy back as JSON."
+"Summarize this week's incident into a shareable html-brief report."
 ```
 
-## For vibe coders
+## The Problem
 
-You do not need to know HTML.
+AI agents are getting better at thinking. They are not getting better at communicating.
 
-Use html-brief when:
-- Your AI answer is too long to read comfortably.
-- You need to compare choices.
-- You need a report that other people can actually read.
-- You want to tune settings or flags and send the result back to AI.
-- You want a visual plan instead of a wall of Markdown.
+A 400-line Markdown plan may be correct, but you have to scroll, hold dependencies in your head, compare options mentally, and copy pieces by hand. In practice, most people skim the first 20 lines and guess the rest.
 
-Say:
-- "Make this an HTML brief."
-- "Compare these options visually."
-- "Turn this plan into html-brief."
-- "Create an editor for these feature flags."
-- "Review this PR as an HTML brief."
+html-brief uses HTML because HTML can do what Markdown cannot: hierarchy with progressive disclosure, tables with color-coded severity, SVG architecture diagrams, interactive controls, and copy/export buttons — all in one file you open locally or share as a link.
 
-The skill chooses the right archetype and generates a browser-openable HTML file.
+> Inspired by [Thariq Shihipar's article](https://thariqs.github.io/html-effectiveness/) on the unreasonable effectiveness of HTML for AI-human communication.
+
+## Archetypes
+
+The skill routes your request to the best-fit archetype:
+
+| Archetype | When to use | What you get |
+|:---|:---|:---|
+| **Plan** | Implementation specs, migrations, rollouts, RFCs | Hero summary → architecture SVG → phased timeline → risks → validation gates |
+| **Compare** | Choosing between options, tradeoff analysis | Recommendation banner → side-by-side cards → criteria matrix → decision memo export |
+| **Review** | PR reviews, code understanding, diff explainers | Motivation → change map → annotated diff → findings by severity → copyable review comments |
+| **Report** | Incident reports, research, status updates, explainers | Executive summary → key findings → evidence with confidence labels → progressive detail |
+| **Editor** | Feature flags, prompt tuning, ticket sorting, settings | Interactive controls → live preview → validation → Copy as JSON / Prompt / Markdown |
+
+You don't need to choose. Say `/html-brief` and describe what you need. The skill decides.
 
 ## Examples
 
-- `skills/html-brief/examples/plan-db-migration/output.html`
-- `skills/html-brief/examples/review-streaming-pr/output.html`
-- `skills/html-brief/examples/edit-feature-flags/output.html`
+<!-- 📸 REPLACE each placeholder with a real screenshot.
+     Take screenshots of the example HTML files opened in a browser.
+     Recommended size: 720px wide. Use a clean browser window.
+-->
 
-Each example is a self-contained file with inline CSS and vanilla JS. Open it directly in a browser.
+<table>
+<tr>
+<td width="33%" align="center">
+<a href="skills/html-brief/examples/plan-db-migration/output.html">
+<img src="docs/assets/example-plan.png" alt="Plan example" width="220" /><br/>
+<strong>Plan</strong><br/>
+<sub>Zero-downtime DB migration</sub>
+</a>
+</td>
+<td width="33%" align="center">
+<a href="skills/html-brief/examples/review-streaming-pr/output.html">
+<img src="docs/assets/example-review.png" alt="Review example" width="220" /><br/>
+<strong>Review</strong><br/>
+<sub>Streaming PR explainer</sub>
+</a>
+</td>
+<td width="33%" align="center">
+<a href="skills/html-brief/examples/edit-feature-flags/output.html">
+<img src="docs/assets/example-editor.png" alt="Editor example" width="220" /><br/>
+<strong>Editor</strong><br/>
+<sub>Feature flag tuner</sub>
+</a>
+</td>
+</tr>
+</table>
 
-## Manual-only mode
+Each example is a single `.html` file — inline CSS, vanilla JS, zero dependencies. Open it in any browser.
 
-By default, the skill can be automatically selected when the request matches the description. To require manual invocation only, add this field to `skills/html-brief/SKILL.md` frontmatter:
+## Round-trip
+
+html-brief is not a one-way export. Every brief includes an **Export Bridge**:
+
+```
+┌─────────┐      ┌─────────────┐      ┌─────────┐
+│ AI Agent │ ───▶ │ HTML Brief  │ ───▶ │ AI Agent │
+│          │      │             │      │          │
+│ generate │      │ read/edit/  │      │ continue │
+│          │      │ decide      │      │          │
+└─────────┘      └──────┬──────┘      └─────────┘
+                        │
+              Copy as Prompt
+              Copy as JSON
+              Copy as Markdown
+```
+
+You read the brief. You make decisions. You click "Copy as Prompt." You paste it into your next agent session. The loop closes.
+
+## Works With
+
+| Agent | Install method | Invocation |
+|:---|:---|:---|
+| **Claude Code** | `~/.claude/skills/` symlink | `/html-brief <request>` |
+| **Codex CLI** | `~/.codex/skills/` symlink | `/html-brief <request>` |
+| **Gemini CLI** | `~/.gemini/skills/` symlink | `/html-brief <request>` |
+| **Cursor** | `.cursor/skills/` symlink | Reference skill in prompt |
+| **GitHub Desktop** | Open this repo as a local repository | Use `File > Open local repository` |
+
+The skill files are agent-agnostic Markdown. Any agent that reads `SKILL.md` can use them.
+
+## Manual-Only Mode
+
+By default, the skill can be auto-selected when the request matches. To require explicit invocation:
+
+Add to `skills/html-brief/SKILL.md` frontmatter:
 
 ```yaml
 disable-model-invocation: true
 ```
 
-Then invoke with:
-
-```text
-/html-brief <your request>
-```
+Then always invoke with `/html-brief <request>`.
 
 ## Validation
-
-Run:
 
 ```bash
 python3 scripts/validate.py
 ```
 
-This checks:
-- JSON schema files parse as JSON.
-- `SKILL.md` body word count is within the expected range.
-- Example HTML files are self-contained.
-- Examples include Export Bridge state and copy buttons.
+Checks HTML self-containment, Export Bridge presence, schema validity, and SKILL.md structure.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+New archetype ideas, example briefs, agent compatibility reports, and design token improvements are all welcome.
 
 ## License
 
-MIT.
+[MIT](LICENSE)
 
+---
+
+<p align="center">
+  If html-brief saves you from skimming a 400-line Markdown wall,<br/>consider giving it a ⭐ so others can find it too.
+</p>
