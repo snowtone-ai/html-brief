@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zero-downtime Postgres migration plan</title>
+<style>
+:root{--bg:#fafaf9;--fg:#1c1917;--muted:#57534e;--surface:#fff;--subtle:#f5f5f4;--border:#e7e5e4;--success:#047857;--success-bg:#ecfdf5;--warning:#b45309;--warning-bg:#fffbeb;--danger:#b91c1c;--danger-bg:#fef2f2;--info:#1d4ed8;--info-bg:#eff6ff;--radius:16px;--wide:1100px;--mono:ui-monospace,SFMono-Regular,Consolas,monospace;--ui:system-ui,-apple-system,Segoe UI,sans-serif}
+@media (prefers-color-scheme:dark){:root{--bg:#0c0a09;--fg:#e7e5e4;--muted:#a8a29e;--surface:#1c1917;--subtle:#292524;--border:#44403c;--success:#34d399;--success-bg:#064e3b;--warning:#fbbf24;--warning-bg:#451a03;--danger:#f87171;--danger-bg:#450a0a;--info:#60a5fa;--info-bg:#172554}}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 Georgia,serif} h1,h2,h3,nav,button,.eyebrow,.badge,dt{font-family:var(--ui)} .hero,main,.export-bar{width:min(var(--wide),calc(100% - 2rem));margin:auto} .hero{padding:3rem 0 1.2rem} .eyebrow{color:var(--info);font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-size:.8rem} h1{font-size:clamp(2rem,6vw,4.2rem);line-height:1.03;margin:.2rem 0 1rem} .hero-summary{font-size:1.25rem;max-width:78ch} .meta-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:1.5rem} .meta-grid div,.panel,.phase,.risk{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem} dt{color:var(--muted);font-size:.8rem} dd{margin:0;font-weight:700} nav{position:sticky;top:0;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(8px);display:flex;gap:.5rem;overflow:auto;padding:.7rem 0;z-index:2} nav a{color:var(--fg);text-decoration:none;border:1px solid var(--border);border-radius:999px;padding:.35rem .7rem;white-space:nowrap} main{display:grid;gap:1rem;padding-bottom:6rem} .two{display:grid;grid-template-columns:1fr 1fr;gap:1rem} table{width:100%;border-collapse:collapse} th,td{border-bottom:1px solid var(--border);padding:.7rem;text-align:left;vertical-align:top} th{font-family:var(--ui);font-size:.85rem;background:var(--subtle)} .diagram{background:var(--subtle);border-radius:var(--radius);padding:1rem;overflow:auto} svg text{font-family:var(--ui);fill:var(--fg)} svg .box{fill:var(--surface);stroke:var(--border);stroke-width:2} svg .arrow{stroke:var(--muted);stroke-width:2;marker-end:url(#arrow)} .timeline{list-style:none;margin:0;padding:0;display:grid;gap:1rem} .phase{border-left:6px solid var(--info)} .phase h3{margin-top:0} .risk[data-severity=high]{border-left:6px solid var(--danger)} .risk[data-severity=medium]{border-left:6px solid var(--warning)} .badge{display:inline-block;border-radius:999px;padding:.2rem .55rem;font-size:.8rem;font-weight:700} .success{background:var(--success-bg);color:var(--success)} .warning{background:var(--warning-bg);color:var(--warning)} .danger{background:var(--danger-bg);color:var(--danger)} .info{background:var(--info-bg);color:var(--info)} .export-bar{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border:1px solid var(--border);border-radius:18px 18px 0 0;padding:.8rem;display:flex;gap:.5rem;justify-content:center;z-index:3} button{border:1px solid var(--border);background:var(--subtle);color:var(--fg);padding:.55rem .8rem;border-radius:10px;cursor:pointer} #copy-toast{position:fixed;right:1rem;bottom:5rem;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:.75rem 1rem;font-family:var(--ui)}
+@media(max-width:700px){.meta-grid,.two{grid-template-columns:1fr} .hero,main,.export-bar{width:min(100% - 1rem,var(--wide))}}
+@media print{nav,.export-bar,button{display:none!important} body{background:white;color:black} details{display:block}}
+</style>
+</head>
+<body data-brief-archetype="plan">
+<header class="hero">
+<p class="eyebrow">Plan Brief</p>
+<h1>Zero-downtime Postgres migration plan</h1>
+<p class="hero-summary">Migrate customer traffic with dual writes, backfill verification, read shadowing, and a reversible cutover. The safest path is expand → backfill → dual-read verification → cutover → contract, with every phase gated by checks.</p>
+<dl class="meta-grid">
+<div><dt>Status</dt><dd><span class="badge info">Proposed</span></dd></div>
+<div><dt>Confidence</dt><dd><span class="badge warning">Medium — depends on dual-write readiness</span></dd></div>
+<div><dt>Primary risk</dt><dd>Rollback after read cutover</dd></div>
+</dl>
+</header>
+<nav aria-label="Plan sections"><a href="#overview">Overview</a><a href="#architecture">Architecture</a><a href="#phases">Phases</a><a href="#risks">Risks</a><a href="#exports">Export</a></nav>
+<main>
+<section id="overview" class="panel">
+<h2>Overview</h2>
+<div class="two">
+<article><h3>Goals</h3><ul><li>Move reads and writes without planned downtime.</li><li>Keep rollback possible until validation closes.</li><li>Detect drift before customer impact.</li></ul></article>
+<article><h3>Non-goals</h3><ul><li>No product behavior change.</li><li>No full data-access rewrite.</li><li>No destructive cleanup before rollback window closes.</li></ul></article>
+</div>
+<h3>Key decisions</h3>
+<table><thead><tr><th>Decision</th><th>Choice</th><th>Rationale</th></tr></thead><tbody>
+<tr><td>Migration style</td><td>Expand and contract</td><td>Separates additive changes from cleanup.</td></tr>
+<tr><td>Cutover control</td><td>Feature flag for read path</td><td>Allows rollback without redeploying.</td></tr>
+<tr><td>Validation</td><td>Counts, checksums, shadow reads</td><td>Catches correctness drift before traffic moves.</td></tr>
+</tbody></table>
+</section>
+<section id="architecture" class="panel">
+<h2>Architecture / Flow</h2>
+<figure class="diagram">
+<svg width="900" height="260" viewBox="0 0 900 260" role="img" aria-labelledby="architecture-title">
+<title id="architecture-title">Dual-write migration flow</title>
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="currentColor"></path></marker></defs>
+<rect class="box" x="40" y="80" width="150" height="70" rx="14"></rect><text x="115" y="120" text-anchor="middle">Application</text>
+<rect class="box" x="330" y="35" width="150" height="70" rx="14"></rect><text x="405" y="75" text-anchor="middle">Old schema</text>
+<rect class="box" x="330" y="150" width="150" height="70" rx="14"></rect><text x="405" y="190" text-anchor="middle">New schema</text>
+<rect class="box" x="620" y="150" width="150" height="70" rx="14"></rect><text x="695" y="190" text-anchor="middle">Backfill job</text>
+<rect class="box" x="620" y="35" width="150" height="70" rx="14"></rect><text x="695" y="75" text-anchor="middle">Read flag</text>
+<line class="arrow" x1="190" y1="105" x2="330" y2="70"></line><text x="250" y="76">legacy writes</text>
+<line class="arrow" x1="190" y1="125" x2="330" y2="185"></line><text x="235" y="173">dual writes</text>
+<line class="arrow" x1="620" y1="185" x2="480" y2="185"></line><text x="545" y="210">historical copy</text>
+<line class="arrow" x1="620" y1="70" x2="190" y2="100"></line><text x="430" y="100">read route</text>
+</svg>
+<figcaption>The application keeps both schemas valid until validation proves the new read path is safe.</figcaption>
+</figure>
+</section>
+<section id="phases" class="panel"><h2>Phased Plan</h2><ol class="timeline">
+<li class="phase"><h3>1. Expand schema</h3><p><strong>Gate:</strong> New nullable columns and indexes deployed with no lock-risk operations.</p><ul><li>Add new nullable structures.</li><li>Create concurrent indexes.</li><li>Deploy code that can read old path only.</li></ul></li>
+<li class="phase"><h3>2. Dual write</h3><p><strong>Gate:</strong> Every new write populates both old and new schema.</p><ul><li>Deploy dual-write code.</li><li>Emit mismatch metrics.</li><li>Add retry logging.</li></ul></li>
+<li class="phase"><h3>3. Backfill and verify</h3><p><strong>Gate:</strong> Historical rows are copied and checksums match.</p><ul><li>Run throttled backfill.</li><li>Compare counts and checksums.</li><li>Replay suspicious rows.</li></ul></li>
+<li class="phase"><h3>4. Shadow reads and cutover</h3><p><strong>Gate:</strong> Shadow reads match and read flag can be enabled gradually.</p><ul><li>Enable shadow reads.</li><li>Canary read flag.</li><li>Ramp to all traffic.</li></ul></li>
+<li class="phase"><h3>5. Contract old schema</h3><p><strong>Gate:</strong> Rollback window closed and no consumers read old fields.</p><ul><li>Remove old reads.</li><li>Drop dual writes.</li><li>Remove obsolete columns later.</li></ul></li>
+</ol></section>
+<section id="risks" class="panel"><h2>Risks and mitigations</h2>
+<article class="risk" data-severity="high"><h3><span class="badge danger">High</span> Blocking lock during expand</h3><p><strong>Signal:</strong> lock wait alerts. <strong>Mitigation:</strong> concurrent index creation and small reviewed DDL.</p></article>
+<article class="risk" data-severity="medium"><h3><span class="badge warning">Medium</span> Backfill write amplification</h3><p><strong>Signal:</strong> replication lag. <strong>Mitigation:</strong> throttle and pause automatically on lag.</p></article>
+<article class="risk" data-severity="high"><h3><span class="badge danger">High</span> Rollback writes only old schema</h3><p><strong>Signal:</strong> rollback after cutover. <strong>Mitigation:</strong> keep dual-write compatibility until contract phase.</p></article>
+</section>
+</main>
+<section id="exports" class="export-bar" aria-label="Export Bridge">
+<button data-copy="prompt">Copy as Prompt</button><button data-copy="json">Copy as JSON</button><button data-copy="markdown">Copy as Markdown</button>
+</section>
+<script type="application/json" id="brief-state">{"version": "1.0", "archetype": "plan", "createdAt": "2026-05-15T00:00:00.000Z", "updatedAt": null, "userIntent": "Create a zero-downtime Postgres migration plan.", "state": {"title": "Zero-downtime Postgres migration plan", "summary": "Migrate customer traffic with dual writes, backfill verification, read shadowing, and a reversible cutover. The safest path is expand → backfill → dual-read verification → cutover → contract, with every phase gated by checks.", "status": "proposed", "confidence": "medium", "goals": ["Move reads and writes to the new schema without planned downtime", "Preserve rollback until after post-cutover validation", "Detect replication or backfill drift before customers are affected", "Keep application deploys decoupled from destructive database changes"], "nonGoals": ["Changing product behavior", "Rewriting the entire data access layer", "Optimizing historical query performance beyond migration safety"], "assumptions": [{"text": "Application can write both old and new columns during the migration window.", "confidence": "medium"}, {"text": "Backfill jobs can be throttled below production saturation.", "confidence": "high"}], "decisions": [{"decision": "Migration style", "choice": "Expand and contract", "rationale": "It separates additive changes from destructive cleanup."}, {"decision": "Cutover control", "choice": "Feature flag for read path", "rationale": "Allows rollback without redeploying."}, {"decision": "Validation", "choice": "Row counts, checksums, and shadow reads", "rationale": "Catches correctness drift before traffic moves."}], "architecture": {"nodes": [{"id": "app", "label": "Application", "kind": "service"}, {"id": "old", "label": "Old schema", "kind": "database"}, {"id": "new", "label": "New schema", "kind": "database"}, {"id": "job", "label": "Backfill job", "kind": "job"}, {"id": "flag", "label": "Read flag", "kind": "service"}], "edges": [{"from": "app", "to": "old", "label": "legacy writes"}, {"from": "app", "to": "new", "label": "dual writes"}, {"from": "job", "to": "new", "label": "historical copy"}, {"from": "flag", "to": "app", "label": "read route"}], "caption": "The application keeps both schemas valid until validation proves the new read path is safe."}, "phases": [{"id": "p1", "name": "Expand schema", "gate": "New nullable columns and indexes deployed with no lock-risk operations.", "tasks": ["Add new nullable structures", "Create concurrent indexes", "Deploy code that can read old path only"], "validation": ["Migration applies in staging with production-like data", "No blocking locks observed"]}, {"id": "p2", "name": "Dual write", "gate": "Every new write populates both old and new schema.", "tasks": ["Deploy dual-write code", "Emit mismatch metrics", "Add retry logging"], "validation": ["Mismatch rate remains zero for new writes", "Error budget is unaffected"]}, {"id": "p3", "name": "Backfill and verify", "gate": "Historical rows are copied and checksums match.", "tasks": ["Run throttled backfill", "Compare counts and checksums", "Replay suspicious rows"], "validation": ["Counts match", "Checksum mismatch is zero or explained"]}, {"id": "p4", "name": "Shadow reads and cutover", "gate": "Shadow reads match and read flag can be enabled gradually.", "tasks": ["Enable shadow reads", "Canary read flag", "Ramp to all traffic"], "validation": ["P95 latency acceptable", "No correctness alerts"]}, {"id": "p5", "name": "Contract old schema", "gate": "Rollback window closed and no consumers read old fields.", "tasks": ["Remove old reads", "Drop dual writes", "Remove obsolete columns later"], "validation": ["No old field reads in logs", "Cleanup migration reviewed separately"]}], "risks": [{"risk": "Long-running index or migration blocks writes", "severity": "high", "signal": "Lock wait alerts during expand phase", "mitigation": "Use concurrent index creation and split DDL into small reviewed changes", "owner": "DB owner"}, {"risk": "Backfill creates write amplification", "severity": "medium", "signal": "CPU, IOPS, or replication lag rises above threshold", "mitigation": "Throttle job and pause automatically on lag", "owner": "Platform"}, {"risk": "Application rollback writes only old schema after new reads start", "severity": "high", "signal": "Rollback occurs after read cutover", "mitigation": "Keep dual-write code backward compatible until contract phase", "owner": "App team"}, {"risk": "Unknown downstream consumer depends on old columns", "severity": "medium", "signal": "Query logs show old column reads", "mitigation": "Audit query logs before cleanup and delay destructive drops", "owner": "Data team"}], "validation": ["npm test", "npm run build", "psql migration dry run on staging snapshot", "compare row counts and checksums", "canary read flag at 1%, 10%, 50%, 100%"]}, "initialState": null}</script>
+<script>
+(function(){
+function state(){return JSON.parse(document.getElementById('brief-state').textContent)}
+function toast(m){let t=document.getElementById('copy-toast');if(!t){t=document.createElement('div');t.id='copy-toast';t.setAttribute('role','status');document.body.appendChild(t)}t.textContent=m;clearTimeout(window.__t);window.__t=setTimeout(()=>t.textContent='',1800)}
+function copy(text,label){if(navigator.clipboard)navigator.clipboard.writeText(text).then(()=>toast('Copied '+label)).catch(()=>fallback(text,label));else fallback(text,label)}
+function fallback(text,label){const a=document.createElement('textarea');a.value=text;document.body.appendChild(a);a.select();document.execCommand('copy');a.remove();toast('Copied '+label)}
+function md(e){const s=e.state;return '# '+s.title+'\n\nStatus: '+s.status+'\nConfidence: '+s.confidence+'\n\n## Summary\n'+s.summary+'\n\n## Goals\n'+s.goals.map(x=>'- '+x).join('\n')+'\n\n## Phases\n'+s.phases.map(p=>'### '+p.name+'\nGate: '+p.gate+'\n'+p.tasks.map(x=>'- '+x).join('\n')).join('\n\n')+'\n\n## Risks\n'+s.risks.map(r=>'- **'+r.severity+'** '+r.risk+' — '+r.mitigation).join('\n')}
+function prompt(e){return ['The user reviewed this html-brief Plan.','','User intent:',e.userIntent,'','Plan summary:',e.state.title,e.state.summary,'','State JSON:',JSON.stringify(e,null,2),'','Please continue from this plan.'].join('\n')}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-copy]');if(!b)return;const s=state();const m=b.dataset.copy;if(m==='json')copy(JSON.stringify(s,null,2),'JSON');if(m==='markdown')copy(md(s),'Markdown');if(m==='prompt')copy(prompt(s),'Prompt')})
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,251 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://html-brief.dev/schemas/compare.schema.json",
+  "title": "html-brief Compare schema",
+  "description": "Schema for a Compare archetype export.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "archetype",
+    "createdAt",
+    "userIntent",
+    "state",
+    "initialState"
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Export protocol version.",
+      "const": "1.0"
+    },
+    "archetype": {
+      "type": "string",
+      "description": "Archetype identifier.",
+      "const": "compare"
+    },
+    "createdAt": {
+      "type": "string",
+      "description": "ISO 8601 generation timestamp.",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "ISO 8601 update timestamp or null.",
+      "format": "date-time"
+    },
+    "userIntent": {
+      "type": "string",
+      "description": "Original or summarized user request.",
+      "minLength": 1
+    },
+    "initialState": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Initial state before option selection, or null."
+    },
+    "state": {
+      "type": "object",
+      "description": "Compare-specific state.",
+      "additionalProperties": false,
+      "required": [
+        "question",
+        "recommendedOptionId",
+        "selectedOptionId",
+        "confidence",
+        "options",
+        "criteria",
+        "matrix",
+        "decisionRationale"
+      ],
+      "properties": {
+        "question": {
+          "type": "string",
+          "description": "Decision question.",
+          "minLength": 1,
+          "maxLength": 180
+        },
+        "recommendedOptionId": {
+          "type": "string",
+          "description": "ID of the recommended option.",
+          "minLength": 1
+        },
+        "selectedOptionId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "ID of the user-selected option, or null."
+        },
+        "confidence": {
+          "type": "string",
+          "description": "Confidence in recommendation.",
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        "options": {
+          "type": "array",
+          "description": "Options being compared.",
+          "minItems": 2,
+          "maxItems": 6,
+          "items": {
+            "type": "object",
+            "description": "Option.",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "name",
+              "optimizesFor",
+              "summary",
+              "pros",
+              "cons"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Option ID.",
+                "minLength": 1
+              },
+              "name": {
+                "type": "string",
+                "description": "Option name.",
+                "minLength": 1
+              },
+              "optimizesFor": {
+                "type": "string",
+                "description": "Primary value optimized by this option.",
+                "minLength": 1
+              },
+              "summary": {
+                "type": "string",
+                "description": "Short option summary.",
+                "minLength": 1
+              },
+              "pros": {
+                "type": "array",
+                "description": "Option advantages.",
+                "minItems": 1,
+                "maxItems": 5,
+                "items": {
+                  "type": "string",
+                  "description": "Pro.",
+                  "minLength": 1
+                }
+              },
+              "cons": {
+                "type": "array",
+                "description": "Option downsides.",
+                "minItems": 1,
+                "maxItems": 5,
+                "items": {
+                  "type": "string",
+                  "description": "Con.",
+                  "minLength": 1
+                }
+              }
+            }
+          }
+        },
+        "criteria": {
+          "type": "array",
+          "description": "Evaluation criteria.",
+          "minItems": 2,
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "description": "Criterion.",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "label",
+              "weight"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Criterion ID.",
+                "minLength": 1
+              },
+              "label": {
+                "type": "string",
+                "description": "Human label.",
+                "minLength": 1
+              },
+              "weight": {
+                "type": "number",
+                "description": "Relative weight from 0 to 1.",
+                "minimum": 0,
+                "maximum": 1
+              }
+            }
+          }
+        },
+        "matrix": {
+          "type": "array",
+          "description": "Ratings per option and criterion.",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "description": "Matrix cell.",
+            "additionalProperties": false,
+            "required": [
+              "optionId",
+              "criterionId",
+              "rating",
+              "rationale"
+            ],
+            "properties": {
+              "optionId": {
+                "type": "string",
+                "description": "Option ID.",
+                "minLength": 1
+              },
+              "criterionId": {
+                "type": "string",
+                "description": "Criterion ID.",
+                "minLength": 1
+              },
+              "rating": {
+                "type": "string",
+                "description": "Rating value.",
+                "enum": [
+                  "good",
+                  "mixed",
+                  "bad",
+                  "unknown"
+                ]
+              },
+              "rationale": {
+                "type": "string",
+                "description": "Rating rationale.",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "decisionRationale": {
+          "type": "string",
+          "description": "Reason the recommendation is preferred.",
+          "minLength": 1
+        },
+        "fallbackConditions": {
+          "type": "array",
+          "description": "Conditions under which another option should be selected.",
+          "items": {
+            "type": "string",
+            "description": "Fallback condition.",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}

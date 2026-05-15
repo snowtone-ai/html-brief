@@ -1,0 +1,111 @@
+{
+  "version": "1.0",
+  "archetype": "editor",
+  "createdAt": "2026-05-15T00:00:00.000Z",
+  "updatedAt": null,
+  "userIntent": "Create a feature flag editor with full round-trip export.",
+  "state": {
+    "title": "Feature flag editor",
+    "editorType": "feature-flags",
+    "items": [
+      {
+        "id": "streamingResponses",
+        "label": "Streaming responses",
+        "group": "Runtime",
+        "value": false,
+        "initialValue": false,
+        "dependsOn": [],
+        "description": "Enable server-sent streaming responses."
+      },
+      {
+        "id": "streamingBackpressure",
+        "label": "Streaming backpressure",
+        "group": "Runtime",
+        "value": false,
+        "initialValue": false,
+        "dependsOn": [
+          "streamingResponses"
+        ],
+        "description": "Protect streaming memory with queue high-water policy."
+      },
+      {
+        "id": "newCheckout",
+        "label": "New checkout",
+        "group": "Product",
+        "value": true,
+        "initialValue": true,
+        "dependsOn": [],
+        "description": "Route checkout traffic to the new flow."
+      },
+      {
+        "id": "checkoutMetricsV2",
+        "label": "Checkout metrics v2",
+        "group": "Analytics",
+        "value": false,
+        "initialValue": false,
+        "dependsOn": [
+          "newCheckout"
+        ],
+        "description": "Emit new checkout funnel events."
+      }
+    ],
+    "changedKeys": [],
+    "validation": {
+      "warnings": [],
+      "errors": []
+    },
+    "exportSummary": "No changes yet."
+  },
+  "initialState": {
+    "title": "Feature flag editor",
+    "editorType": "feature-flags",
+    "items": [
+      {
+        "id": "streamingResponses",
+        "label": "Streaming responses",
+        "group": "Runtime",
+        "value": false,
+        "initialValue": false,
+        "dependsOn": [],
+        "description": "Enable server-sent streaming responses."
+      },
+      {
+        "id": "streamingBackpressure",
+        "label": "Streaming backpressure",
+        "group": "Runtime",
+        "value": false,
+        "initialValue": false,
+        "dependsOn": [
+          "streamingResponses"
+        ],
+        "description": "Protect streaming memory with queue high-water policy."
+      },
+      {
+        "id": "newCheckout",
+        "label": "New checkout",
+        "group": "Product",
+        "value": true,
+        "initialValue": true,
+        "dependsOn": [],
+        "description": "Route checkout traffic to the new flow."
+      },
+      {
+        "id": "checkoutMetricsV2",
+        "label": "Checkout metrics v2",
+        "group": "Analytics",
+        "value": false,
+        "initialValue": false,
+        "dependsOn": [
+          "newCheckout"
+        ],
+        "description": "Emit new checkout funnel events."
+      }
+    ],
+    "changedKeys": [],
+    "validation": {
+      "warnings": [],
+      "errors": []
+    },
+    "exportSummary": "No changes yet."
+  }
+}

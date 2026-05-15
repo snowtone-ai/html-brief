@@ -1,0 +1,258 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://html-brief.dev/schemas/review.schema.json",
+  "title": "html-brief Review schema",
+  "description": "Schema for a Review archetype export.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "archetype",
+    "createdAt",
+    "userIntent",
+    "state",
+    "initialState"
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Export protocol version.",
+      "const": "1.0"
+    },
+    "archetype": {
+      "type": "string",
+      "description": "Archetype identifier.",
+      "const": "review"
+    },
+    "createdAt": {
+      "type": "string",
+      "description": "ISO 8601 generation timestamp.",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "ISO 8601 update timestamp or null.",
+      "format": "date-time"
+    },
+    "userIntent": {
+      "type": "string",
+      "description": "Original or summarized user request.",
+      "minLength": 1
+    },
+    "initialState": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Initial review state, usually null."
+    },
+    "state": {
+      "type": "object",
+      "description": "Review-specific state.",
+      "additionalProperties": false,
+      "required": [
+        "title",
+        "verdict",
+        "summary",
+        "motivation",
+        "files",
+        "findings",
+        "testCoverage"
+      ],
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Review title.",
+          "minLength": 1
+        },
+        "verdict": {
+          "type": "string",
+          "description": "Overall review verdict.",
+          "enum": [
+            "approve",
+            "approve_with_comments",
+            "request_changes",
+            "needs_more_context"
+          ]
+        },
+        "summary": {
+          "type": "string",
+          "description": "Conclusion-first review summary.",
+          "minLength": 1
+        },
+        "motivation": {
+          "type": "object",
+          "description": "Before/after motivation.",
+          "additionalProperties": false,
+          "required": [
+            "before",
+            "after"
+          ],
+          "properties": {
+            "before": {
+              "type": "string",
+              "description": "Old behavior or problem.",
+              "minLength": 1
+            },
+            "after": {
+              "type": "string",
+              "description": "New behavior or solution.",
+              "minLength": 1
+            }
+          }
+        },
+        "files": {
+          "type": "array",
+          "description": "Files reviewed.",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "description": "Reviewed file.",
+            "additionalProperties": false,
+            "required": [
+              "path",
+              "role",
+              "notes"
+            ],
+            "properties": {
+              "path": {
+                "type": "string",
+                "description": "File path.",
+                "minLength": 1
+              },
+              "role": {
+                "type": "string",
+                "description": "Role of file in change.",
+                "minLength": 1
+              },
+              "notes": {
+                "type": "array",
+                "description": "File-level notes.",
+                "items": {
+                  "type": "string",
+                  "description": "Note.",
+                  "minLength": 1
+                }
+              }
+            }
+          }
+        },
+        "findings": {
+          "type": "array",
+          "description": "Actionable findings.",
+          "minItems": 0,
+          "items": {
+            "type": "object",
+            "description": "Review finding.",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "severity",
+              "title",
+              "file",
+              "impact",
+              "suggestion"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Finding ID.",
+                "minLength": 1
+              },
+              "severity": {
+                "type": "string",
+                "description": "Finding severity.",
+                "enum": [
+                  "blocker",
+                  "high",
+                  "medium",
+                  "low",
+                  "info"
+                ]
+              },
+              "title": {
+                "type": "string",
+                "description": "Finding title.",
+                "minLength": 1
+              },
+              "file": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "File path if applicable."
+              },
+              "line": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "description": "Line number if known.",
+                "minimum": 1
+              },
+              "impact": {
+                "type": "string",
+                "description": "Why this matters.",
+                "minLength": 1
+              },
+              "suggestion": {
+                "type": "string",
+                "description": "Actionable fix or next step.",
+                "minLength": 1
+              },
+              "codeExcerpt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Relevant code excerpt or null."
+              }
+            }
+          }
+        },
+        "testCoverage": {
+          "type": "object",
+          "description": "Test coverage summary.",
+          "additionalProperties": false,
+          "required": [
+            "covered",
+            "missing",
+            "recommended"
+          ],
+          "properties": {
+            "covered": {
+              "type": "array",
+              "description": "Covered tests/checks.",
+              "items": {
+                "type": "string",
+                "description": "Covered item.",
+                "minLength": 1
+              }
+            },
+            "missing": {
+              "type": "array",
+              "description": "Missing tests/checks.",
+              "items": {
+                "type": "string",
+                "description": "Missing item.",
+                "minLength": 1
+              }
+            },
+            "recommended": {
+              "type": "array",
+              "description": "Recommended tests/checks.",
+              "items": {
+                "type": "string",
+                "description": "Recommendation.",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

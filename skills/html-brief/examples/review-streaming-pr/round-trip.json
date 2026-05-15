@@ -1,0 +1,88 @@
+{
+  "version": "1.0",
+  "archetype": "review",
+  "createdAt": "2026-05-15T00:00:00.000Z",
+  "updatedAt": null,
+  "userIntent": "Review a PR that adds streaming responses and backpressure handling.",
+  "state": {
+    "title": "Streaming/backpressure PR review",
+    "verdict": "request_changes",
+    "summary": "The PR moves response generation to streaming and adds a queue-based backpressure layer, but the cancellation path and high-water behavior need fixes before merge.",
+    "motivation": {
+      "before": "Responses were buffered fully before being sent, increasing latency and memory use.",
+      "after": "Chunks stream as they arrive, with queue backpressure intended to protect memory."
+    },
+    "files": [
+      {
+        "path": "src/server/stream.ts",
+        "role": "Creates stream controller and chunk writer",
+        "notes": [
+          "Backpressure signal is observed but not propagated to producer."
+        ]
+      },
+      {
+        "path": "src/server/backpressure.ts",
+        "role": "Queue and high-water policy",
+        "notes": [
+          "Drop behavior is unclear for user-visible chunks."
+        ]
+      },
+      {
+        "path": "src/server/__tests__/stream.test.ts",
+        "role": "Unit coverage",
+        "notes": [
+          "Cancellation case missing."
+        ]
+      }
+    ],
+    "findings": [
+      {
+        "id": "f1",
+        "severity": "high",
+        "title": "Abort signal does not stop the producer",
+        "file": "src/server/stream.ts",
+        "line": 88,
+        "impact": "Client disconnects can keep upstream work running and consume memory.",
+        "suggestion": "Wire the request AbortSignal through the producer loop and close the queue on abort.",
+        "codeExcerpt": "+ for await (const chunk of producer()) { await queue.push(chunk) }"
+      },
+      {
+        "id": "f2",
+        "severity": "medium",
+        "title": "High-water policy can reorder terminal chunks",
+        "file": "src/server/backpressure.ts",
+        "line": 41,
+        "impact": "A final error or done marker may be dropped behind data chunks, leaving clients hanging.",
+        "suggestion": "Make terminal events non-droppable and drain or close explicitly.",
+        "codeExcerpt": "+ if (queue.length > highWater) queue.shift()"
+      },
+      {
+        "id": "f3",
+        "severity": "low",
+        "title": "Tests do not cover slow consumers",
+        "file": "src/server/__tests__/stream.test.ts",
+        "line": null,
+        "impact": "Regression risk remains around delayed readers.",
+        "suggestion": "Add a fake slow writable and assert bounded queue length.",
+        "codeExcerpt": null
+      }
+    ],
+    "testCoverage": {
+      "covered": [
+        "Basic chunk streaming",
+        "Queue push/pop behavior"
+      ],
+      "missing": [
+        "Client abort",
+        "Slow consumer with high-water threshold",
+        "Terminal event preservation"
+      ],
+      "recommended": [
+        "Add abort propagation test",
+        "Add slow writable test",
+        "Add terminal event non-droppable test"
+      ]
+    }
+  },
+  "initialState": null
+}

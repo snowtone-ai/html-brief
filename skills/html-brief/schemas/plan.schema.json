@@ -1,0 +1,398 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://html-brief.dev/schemas/plan.schema.json",
+  "title": "html-brief Plan schema",
+  "description": "Schema for a Plan archetype state inside the common envelope.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "archetype",
+    "createdAt",
+    "userIntent",
+    "state",
+    "initialState"
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Export protocol version.",
+      "const": "1.0"
+    },
+    "archetype": {
+      "type": "string",
+      "description": "Archetype identifier.",
+      "const": "plan"
+    },
+    "createdAt": {
+      "type": "string",
+      "description": "ISO 8601 generation timestamp.",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "ISO 8601 update timestamp or null.",
+      "format": "date-time"
+    },
+    "userIntent": {
+      "type": "string",
+      "description": "Original or summarized user request.",
+      "minLength": 1
+    },
+    "initialState": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Initial state, usually null for static Plan artifacts."
+    },
+    "state": {
+      "type": "object",
+      "description": "Plan-specific current state.",
+      "additionalProperties": false,
+      "required": [
+        "title",
+        "summary",
+        "status",
+        "confidence",
+        "goals",
+        "nonGoals",
+        "decisions",
+        "phases",
+        "risks",
+        "validation"
+      ],
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Plan title.",
+          "minLength": 1,
+          "maxLength": 140
+        },
+        "summary": {
+          "type": "string",
+          "description": "Conclusion-first summary of the plan.",
+          "minLength": 1,
+          "maxLength": 600
+        },
+        "status": {
+          "type": "string",
+          "description": "Current plan status.",
+          "enum": [
+            "draft",
+            "proposed",
+            "in_review",
+            "approved",
+            "blocked"
+          ]
+        },
+        "confidence": {
+          "type": "string",
+          "description": "Confidence in the plan.",
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        "goals": {
+          "type": "array",
+          "description": "Goals the plan must achieve.",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {
+            "type": "string",
+            "description": "Single goal.",
+            "minLength": 1
+          }
+        },
+        "nonGoals": {
+          "type": "array",
+          "description": "Explicitly excluded scope.",
+          "minItems": 0,
+          "maxItems": 8,
+          "items": {
+            "type": "string",
+            "description": "Single non-goal.",
+            "minLength": 1
+          }
+        },
+        "assumptions": {
+          "type": "array",
+          "description": "Assumptions used by the plan.",
+          "minItems": 0,
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "description": "Assumption item.",
+            "additionalProperties": false,
+            "required": [
+              "text",
+              "confidence"
+            ],
+            "properties": {
+              "text": {
+                "type": "string",
+                "description": "Assumption text.",
+                "minLength": 1
+              },
+              "confidence": {
+                "type": "string",
+                "description": "Confidence in the assumption.",
+                "enum": [
+                  "low",
+                  "medium",
+                  "high"
+                ]
+              }
+            }
+          }
+        },
+        "decisions": {
+          "type": "array",
+          "description": "Key decisions made by the plan.",
+          "minItems": 1,
+          "maxItems": 12,
+          "items": {
+            "type": "object",
+            "description": "Decision item.",
+            "additionalProperties": false,
+            "required": [
+              "decision",
+              "choice",
+              "rationale"
+            ],
+            "properties": {
+              "decision": {
+                "type": "string",
+                "description": "Decision area.",
+                "minLength": 1
+              },
+              "choice": {
+                "type": "string",
+                "description": "Chosen approach.",
+                "minLength": 1
+              },
+              "rationale": {
+                "type": "string",
+                "description": "Reason for the choice.",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "architecture": {
+          "type": "object",
+          "description": "Architecture or flow representation.",
+          "additionalProperties": false,
+          "required": [
+            "nodes",
+            "edges",
+            "caption"
+          ],
+          "properties": {
+            "nodes": {
+              "type": "array",
+              "description": "Diagram nodes.",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "description": "Node.",
+                "additionalProperties": false,
+                "required": [
+                  "id",
+                  "label",
+                  "kind"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "Node ID.",
+                    "minLength": 1
+                  },
+                  "label": {
+                    "type": "string",
+                    "description": "Node label.",
+                    "minLength": 1
+                  },
+                  "kind": {
+                    "type": "string",
+                    "description": "Node kind.",
+                    "enum": [
+                      "source",
+                      "service",
+                      "database",
+                      "job",
+                      "queue",
+                      "user",
+                      "external",
+                      "other"
+                    ]
+                  }
+                }
+              }
+            },
+            "edges": {
+              "type": "array",
+              "description": "Diagram edges.",
+              "items": {
+                "type": "object",
+                "description": "Directed edge.",
+                "additionalProperties": false,
+                "required": [
+                  "from",
+                  "to",
+                  "label"
+                ],
+                "properties": {
+                  "from": {
+                    "type": "string",
+                    "description": "Source node ID.",
+                    "minLength": 1
+                  },
+                  "to": {
+                    "type": "string",
+                    "description": "Target node ID.",
+                    "minLength": 1
+                  },
+                  "label": {
+                    "type": "string",
+                    "description": "Edge label.",
+                    "minLength": 1
+                  }
+                }
+              }
+            },
+            "caption": {
+              "type": "string",
+              "description": "Plain-language diagram caption.",
+              "minLength": 1
+            }
+          }
+        },
+        "phases": {
+          "type": "array",
+          "description": "Ordered plan phases.",
+          "minItems": 1,
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "description": "Plan phase.",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "name",
+              "gate",
+              "tasks",
+              "validation"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Stable phase ID.",
+                "minLength": 1
+              },
+              "name": {
+                "type": "string",
+                "description": "Phase name.",
+                "minLength": 1
+              },
+              "gate": {
+                "type": "string",
+                "description": "Completion gate for the phase.",
+                "minLength": 1
+              },
+              "tasks": {
+                "type": "array",
+                "description": "Tasks in this phase.",
+                "minItems": 1,
+                "maxItems": 12,
+                "items": {
+                  "type": "string",
+                  "description": "Task text.",
+                  "minLength": 1
+                }
+              },
+              "validation": {
+                "type": "array",
+                "description": "Validation checks for this phase.",
+                "minItems": 1,
+                "maxItems": 12,
+                "items": {
+                  "type": "string",
+                  "description": "Validation item.",
+                  "minLength": 1
+                }
+              }
+            }
+          }
+        },
+        "risks": {
+          "type": "array",
+          "description": "Risks and mitigations.",
+          "minItems": 1,
+          "maxItems": 12,
+          "items": {
+            "type": "object",
+            "description": "Risk item.",
+            "additionalProperties": false,
+            "required": [
+              "risk",
+              "severity",
+              "signal",
+              "mitigation"
+            ],
+            "properties": {
+              "risk": {
+                "type": "string",
+                "description": "Risk description.",
+                "minLength": 1
+              },
+              "severity": {
+                "type": "string",
+                "description": "Risk severity.",
+                "enum": [
+                  "blocker",
+                  "high",
+                  "medium",
+                  "low",
+                  "info"
+                ]
+              },
+              "signal": {
+                "type": "string",
+                "description": "Observable signal that the risk is materializing.",
+                "minLength": 1
+              },
+              "mitigation": {
+                "type": "string",
+                "description": "Mitigation plan.",
+                "minLength": 1
+              },
+              "owner": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Owner if known."
+              }
+            }
+          }
+        },
+        "validation": {
+          "type": "array",
+          "description": "Overall validation commands or checks.",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "description": "Validation command or check.",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,213 @@
+{
+  "version": "1.0",
+  "archetype": "plan",
+  "createdAt": "2026-05-15T00:00:00.000Z",
+  "updatedAt": null,
+  "userIntent": "Create a zero-downtime Postgres migration plan.",
+  "state": {
+    "title": "Zero-downtime Postgres migration plan",
+    "summary": "Migrate customer traffic with dual writes, backfill verification, read shadowing, and a reversible cutover. The safest path is expand → backfill → dual-read verification → cutover → contract, with every phase gated by checks.",
+    "status": "proposed",
+    "confidence": "medium",
+    "goals": [
+      "Move reads and writes to the new schema without planned downtime",
+      "Preserve rollback until after post-cutover validation",
+      "Detect replication or backfill drift before customers are affected",
+      "Keep application deploys decoupled from destructive database changes"
+    ],
+    "nonGoals": [
+      "Changing product behavior",
+      "Rewriting the entire data access layer",
+      "Optimizing historical query performance beyond migration safety"
+    ],
+    "assumptions": [
+      {
+        "text": "Application can write both old and new columns during the migration window.",
+        "confidence": "medium"
+      },
+      {
+        "text": "Backfill jobs can be throttled below production saturation.",
+        "confidence": "high"
+      }
+    ],
+    "decisions": [
+      {
+        "decision": "Migration style",
+        "choice": "Expand and contract",
+        "rationale": "It separates additive changes from destructive cleanup."
+      },
+      {
+        "decision": "Cutover control",
+        "choice": "Feature flag for read path",
+        "rationale": "Allows rollback without redeploying."
+      },
+      {
+        "decision": "Validation",
+        "choice": "Row counts, checksums, and shadow reads",
+        "rationale": "Catches correctness drift before traffic moves."
+      }
+    ],
+    "architecture": {
+      "nodes": [
+        {
+          "id": "app",
+          "label": "Application",
+          "kind": "service"
+        },
+        {
+          "id": "old",
+          "label": "Old schema",
+          "kind": "database"
+        },
+        {
+          "id": "new",
+          "label": "New schema",
+          "kind": "database"
+        },
+        {
+          "id": "job",
+          "label": "Backfill job",
+          "kind": "job"
+        },
+        {
+          "id": "flag",
+          "label": "Read flag",
+          "kind": "service"
+        }
+      ],
+      "edges": [
+        {
+          "from": "app",
+          "to": "old",
+          "label": "legacy writes"
+        },
+        {
+          "from": "app",
+          "to": "new",
+          "label": "dual writes"
+        },
+        {
+          "from": "job",
+          "to": "new",
+          "label": "historical copy"
+        },
+        {
+          "from": "flag",
+          "to": "app",
+          "label": "read route"
+        }
+      ],
+      "caption": "The application keeps both schemas valid until validation proves the new read path is safe."
+    },
+    "phases": [
+      {
+        "id": "p1",
+        "name": "Expand schema",
+        "gate": "New nullable columns and indexes deployed with no lock-risk operations.",
+        "tasks": [
+          "Add new nullable structures",
+          "Create concurrent indexes",
+          "Deploy code that can read old path only"
+        ],
+        "validation": [
+          "Migration applies in staging with production-like data",
+          "No blocking locks observed"
+        ]
+      },
+      {
+        "id": "p2",
+        "name": "Dual write",
+        "gate": "Every new write populates both old and new schema.",
+        "tasks": [
+          "Deploy dual-write code",
+          "Emit mismatch metrics",
+          "Add retry logging"
+        ],
+        "validation": [
+          "Mismatch rate remains zero for new writes",
+          "Error budget is unaffected"
+        ]
+      },
+      {
+        "id": "p3",
+        "name": "Backfill and verify",
+        "gate": "Historical rows are copied and checksums match.",
+        "tasks": [
+          "Run throttled backfill",
+          "Compare counts and checksums",
+          "Replay suspicious rows"
+        ],
+        "validation": [
+          "Counts match",
+          "Checksum mismatch is zero or explained"
+        ]
+      },
+      {
+        "id": "p4",
+        "name": "Shadow reads and cutover",
+        "gate": "Shadow reads match and read flag can be enabled gradually.",
+        "tasks": [
+          "Enable shadow reads",
+          "Canary read flag",
+          "Ramp to all traffic"
+        ],
+        "validation": [
+          "P95 latency acceptable",
+          "No correctness alerts"
+        ]
+      },
+      {
+        "id": "p5",
+        "name": "Contract old schema",
+        "gate": "Rollback window closed and no consumers read old fields.",
+        "tasks": [
+          "Remove old reads",
+          "Drop dual writes",
+          "Remove obsolete columns later"
+        ],
+        "validation": [
+          "No old field reads in logs",
+          "Cleanup migration reviewed separately"
+        ]
+      }
+    ],
+    "risks": [
+      {
+        "risk": "Long-running index or migration blocks writes",
+        "severity": "high",
+        "signal": "Lock wait alerts during expand phase",
+        "mitigation": "Use concurrent index creation and split DDL into small reviewed changes",
+        "owner": "DB owner"
+      },
+      {
+        "risk": "Backfill creates write amplification",
+        "severity": "medium",
+        "signal": "CPU, IOPS, or replication lag rises above threshold",
+        "mitigation": "Throttle job and pause automatically on lag",
+        "owner": "Platform"
+      },
+      {
+        "risk": "Application rollback writes only old schema after new reads start",
+        "severity": "high",
+        "signal": "Rollback occurs after read cutover",
+        "mitigation": "Keep dual-write code backward compatible until contract phase",
+        "owner": "App team"
+      },
+      {
+        "risk": "Unknown downstream consumer depends on old columns",
+        "severity": "medium",
+        "signal": "Query logs show old column reads",
+        "mitigation": "Audit query logs before cleanup and delay destructive drops",
+        "owner": "Data team"
+      }
+    ],
+    "validation": [
+      "npm test",
+      "npm run build",
+      "psql migration dry run on staging snapshot",
+      "compare row counts and checksums",
+      "canary read flag at 1%, 10%, 50%, 100%"
+    ]
+  },
+  "initialState": null
+}
