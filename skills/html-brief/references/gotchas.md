@@ -24,6 +24,20 @@ Avoid the generic AI artifact look:
 
 Prefer calm, document-first, information-rich design. The reader should notice the structure before the style.
 
+## Legacy design system: do not use
+
+The following patterns belong to a previous design system and must not appear in new artifacts:
+
+- Warm stone grays (`#fafaf9`, `#f5f5f4`, `#1c1917`, Stone palette).
+- Token names like `--bg`, `--surface`, `--text`, `--muted`, `--border`, `--accent`, `--danger`, `--neutral`.
+- Serif body fonts (Georgia, Times New Roman).
+- `999px` pill-radius on navigation links.
+- `backdrop-filter: blur()` on navigation bars.
+- Border-only cards without elevation (box-shadow).
+- Uniform `14px` or `16px` border-radius on all elements; follow the Material shape scale.
+
+Use the Material Design 3 tokens from `references/design-tokens.md` instead.
+
 ## Global structure anti-patterns
 
 - The first screen explains the topic instead of stating the conclusion.

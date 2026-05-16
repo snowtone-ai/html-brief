@@ -63,7 +63,7 @@ Load only the references needed for the chosen artifact. Always load eferences/
 
 ## Universal Output Rules
 
-Every HTML brief should include semantic landmarks, a meaningful title, a hero with conclusion or decision context, clear section headings, and an export region when round-trip behavior is expected. Prefer native HTML controls, details elements, tables, and SVG diagrams over framework-like abstractions. Use CSS custom properties for semantic tokens: background, surface, text, muted text, border, accent, success, warning, danger, and neutral.
+Every HTML brief should include semantic landmarks, a meaningful title, a hero with conclusion or decision context, clear section headings, and an export region when round-trip behavior is expected. Prefer native HTML controls, details elements, tables, and SVG diagrams over framework-like abstractions. Use the Material Design 3 token system defined in references/design-tokens.md: `--md-primary`, `--md-surface`, `--md-on-surface`, `--md-outline`, `--md-success`, `--md-warning`, `--md-error`, `--md-info`, and their container/on-container pairs. Use the `--md-shape-*` scale for border-radius and `--md-elevation-*` for box-shadow. Do not invent ad-hoc color or spacing values.
 
 Each artifact with state must embed JSON in a script tag such as rief-initial-state or rief-state. Copy as JSON must serialize the envelope or current state clearly. Copy as Prompt must produce instructions that another AI session can act on without reading the page. Copy as Markdown must produce a readable text version. Clipboard behavior must include a fallback for browsers that block 
 avigator.clipboard on local files. Toasts should confirm the copied format without interrupting reading.
