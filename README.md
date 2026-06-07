@@ -1,8 +1,8 @@
 # html-brief
 
-## 概要
+> AIが生成した長い計画・分析・レビューを、ブラウザで読みやすい1ページのHTMLに変換するスキル
 
-AIエージェントが生成した長大な計画・比較・レビュー結果を、ブラウザで読める単一HTMLファイルに変換するスキル（拡張機能）です。400行にわたるテキストをスキャンしやすい構造・図・インタラクティブなコントロールを含む1ページのHTMLに整形し、「Copy as Prompt」ボタンで意思決定内容をそのまま次のAIセッションに返送できます。Claude Code・Codex CLI・Gemini CLI・Cursorで利用できます。
+400行にわたるAIの出力をスキャンしやすい構造・図・インタラクティブなコントロールを含む単一HTMLファイルに整形します。Claude Code・Codex CLI・Gemini CLI・Cursorで利用でき、「Copy as Prompt」ボタンで決定内容を次のAIセッションにそのまま渡せます。
 
 ---
 
@@ -23,19 +23,19 @@ AI・外部API：Claude Code、Codex CLI、Gemini CLI、Cursorのスキル機構
 
 ---
 
-## アーキテクチャの特徴
+## 設計の工夫
 
 - 出力ファイルはCSSとJavaScriptをすべてインラインに含む単一HTMLファイルで、ブラウザさえあればどこでも開ける設計
 - スキル定義（`SKILL.md`）がエージェント非依存のMarkdown形式で書かれており、複数のAIツールから共通利用できる
 
 ---
 
-## 開発環境のセットアップ
+## セットアップ
 
 依存パッケージなし・ビルドステップなし。
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/html-brief.git
+git clone https://github.com/snowtone-ai/html-brief.git
 cd html-brief
 ```
 
@@ -57,3 +57,9 @@ ln -sf "$(pwd)/skills/html-brief" ~/.claude/skills/html-brief
 ```bash
 python scripts/validate.py
 ```
+
+---
+
+## ライセンス
+
+MIT
