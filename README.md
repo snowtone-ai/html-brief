@@ -18,8 +18,10 @@
 
 ## 技術スタック
 
-フロントエンド：HTML・CSS・バニラJavaScript（依存パッケージなし・ビルドステップなし）
-AI・外部API：Claude Code、Codex CLI、Gemini CLI、Cursorのスキル機構を利用（エージェント非依存のMarkdownベース定義）
+| カテゴリ | 技術・ツール |
+|---|---|
+| フロントエンド | HTML・CSS・バニラJavaScript（依存パッケージなし・ビルドステップなし） |
+| AI・外部API | Claude Code、Codex CLI、Gemini CLI、Cursorのスキル機構を利用（エージェント非依存のMarkdownベース定義） |
 
 ---
 
