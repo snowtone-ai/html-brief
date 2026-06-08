@@ -1,5 +1,10 @@
 # html-brief
 
+![HTML5](https://img.shields.io/badge/HTML5-single_file-orange?logo=html5)
+![JavaScript](https://img.shields.io/badge/JavaScript-vanilla-yellow?logo=javascript)
+![Claude Code](https://img.shields.io/badge/Claude_Code-skill-black?logo=anthropic)
+![License](https://img.shields.io/badge/license-MIT-lightgrey)
+
 > AIが生成した長い計画・分析・レビューを、ブラウザで読みやすい1ページのHTMLに変換するスキル
 
 400行にわたるAIの出力をスキャンしやすい構造・図・インタラクティブなコントロールを含む単一HTMLファイルに整形します。Claude Code・Codex CLI・Gemini CLI・Cursorで利用でき、「Copy as Prompt」ボタンで決定内容を次のAIセッションにそのまま渡せます。
@@ -8,20 +13,20 @@
 
 ## 主な機能
 
-- 実装計画・マイグレーション・RFC（技術仕様書）を視覚的なHTMLブリーフに変換できる
+- 実装計画・マイグレーション・RFCを視覚的なHTMLブリーフに変換できる
 - 選択肢の比較・トレードオフ分析をカード形式と評価マトリクスで表示できる
 - コードレビュー結果を重要度別に整理して表示できる
 - インシデントレポートや調査結果をエグゼクティブサマリー付きで出力できる
-- 「Copy as Prompt / JSON / Markdown」ボタンで決定内容をAIエージェントに返送できる（ラウンドトリップ）
+- 「Copy as Prompt / JSON / Markdown」ボタンで決定内容をAIエージェントに返送できる
 
 ---
 
 ## 技術スタック
 
-| カテゴリ | 技術・ツール |
+| カテゴリ | 技術 |
 |---|---|
-| フロントエンド | HTML・CSS・バニラJavaScript（依存パッケージなし・ビルドステップなし） |
-| AI・外部API | Claude Code、Codex CLI、Gemini CLI、Cursorのスキル機構を利用（エージェント非依存のMarkdownベース定義） |
+| フロントエンド | HTML, CSS, バニラJavaScript |
+| AI対応 | Claude Code, Codex CLI, Gemini CLI, Cursor |
 
 ---
 
